@@ -4,6 +4,8 @@ A flask application with REST endpoints to
 
 ## Usage
 
+First make sure `pipenv` is installed
+
 Set `REG_DEBUG` to run flask in debug mode, and use a local database under `/tmp/registration_2019.db`
 
 ```shell
