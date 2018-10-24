@@ -16,7 +16,7 @@ class EmailSubscription(db.Model):
 def find_sub(search_email):
     return EmailSubscription.query.filter_by(email=search_email).first()
 
-@app.route('/email_list/subscribe', methods=['POST'])
+@app.route('/email_list/v1/subscribe', methods=['POST'])
 def subscribe():
     req_email = request.get_json().get('email')
 
@@ -31,7 +31,7 @@ def subscribe():
         db.session.commit()
     return jsonify({"status": "ok"}), 200
 
-@app.route('/email_list/unsubscribe', methods=['POST'])
+@app.route('/email_list/v1/unsubscribe', methods=['POST'])
 def unsubscribe():
     json = request.get_json()
     req_email = json.get('email')
@@ -54,7 +54,7 @@ def unsubscribe():
 
 
 # TODO: Needs authentication
-#@app.route('/email_list/subscriptions', methods=['GET'])
+#@app.route('/email_list/v1/subscriptions', methods=['GET'])
 #def subscriptions():
 #    subscribed = EmailSubscription.query.filter_by(subscribed=True).all()
 #    emails = list(map(lambda sub : sub.email, subscribed))
