@@ -8,6 +8,7 @@ flask = "*"
 flask-sqlalchemy = "*"
 pyjwt = "*"
 pymysql = "*"
+flask-restful = "*"
 
 [dev-packages]
 

@@ -1,36 +1,44 @@
 import os
-import uuid
-from .core import app, db
-from flask import jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Resource, reqparse
+from .core import api, db
+from .authentication import auth
+from .helper import email
 
-def rand_uuid():
-    return str(uuid.uuid4())
+## Models
 
 class EmailSubscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
 
-def find_sub(search_email):
-    return EmailSubscription.query.filter_by(email=search_email).first()
+## Endpoints
 
-@app.route('/email_list/v1/subscribe', methods=['POST'])
-def subscribe():
-    req_email = request.get_json().get('email')
+class Subscribe(Resource):
 
-    sub = find_sub(req_email)
+    parser = reqparse.RequestParser()
 
-    if sub == None:
-        sub = EmailSubscription(email=req_email)
-        db.session.add(sub)
-        db.session.commit()
-    else:
-        db.session.commit()
-    return jsonify({"status": "ok"}), 200
+    def __init__(self):
+        self.parser.add_argument('email', type=email, required=True)
 
-# TODO: Needs authentication
-#@app.route('/email_list/v1/subscriptions', methods=['GET'])
-#def subscriptions():
-#    subscribed = EmailSubscription.query.filter_by(subscribed=True).all()
-#    emails = list(map(lambda sub : sub.email, subscribed))
-#    return jsonify(emails)
+    def post(self):
+
+        req_email = self.parser.parse_args()['email']
+
+        sub = EmailSubscription.query.filter_by(email=req_email).first()
+
+        if sub == None:
+            new_sub = EmailSubscription(email=req_email)
+            db.session.add(new_sub)
+            db.session.commit()
+
+        return {"status": "ok"}
+
+class Subscriptions(Resource):
+
+    @auth
+    def get(self):
+        return list(map(lambda x: x.email, EmailSubscription.query.all()))
+
+## Register endpoints
+
+api.add_resource(Subscribe, '/email_list/v1/subscribe')
+api.add_resource(Subscriptions, '/email_list/v1/subscriptions')
