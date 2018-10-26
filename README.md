@@ -1,12 +1,12 @@
 # Registration Server 2019
 
-A flask application with REST endpoints to
+A flask application with REST endpoints for the 2019 registration backend
 
 ## Usage
 
 First make sure `pipenv` is installed
 
-Set `REG_DEBUG` to run flask in debug mode, and use a local database under `/tmp/registration_2019.db`
+Set `REG_DEBUG` to run flask in debug mode (uses a local database under `/tmp/registration_2019.db`)
 
 ```shell
 REG_DEBUG=true ./bootstrap
@@ -18,21 +18,41 @@ To deploy (not in debug mode), the following environment variables must be set:
 
 ## Endpoints
 
+Note that any endpoint with JWT authentication must contain the token in the header as a Bearer token
+
+To authenticate from `curl`, simple add the following:
+```bash
+-H "Authorization: Bearer <token>"
+```
+
+### OAuth
+
+`/oauth/v1/login` `POST`:
+
+```json
+{
+    "code": "[string]"
+}
+```
+
+Verifies a login through oauth with Google
+
+Returns a JWT to be provided in further requests
+
 ### Email List
 
-`/email_list/subscribe` `POST`:
+`/email_list/v1/subscribe` `POST`:
 
 ```json
 {
-    "email": "[255 chars max]"
+    "email": "[string]"
 }
 ```
 
-`/email_list/unsubscribe` `POST`:
+`/email_list/v1/subscriptions` `GET` (JWT authenticated):
 
-```json
-{
-    "email": "[255 chars max]",
-    "token": "[36 chars]"
-}
-```
+Returns a JSON list of emails on the email list
+
+### Registration
+
+NV TODO: Finish adding to this doc from https://docs.google.com/document/d/1Jqaw5uFl18QguDwOoZJOYnERD5Rx57R9DD5r4Clh4KE
