@@ -9,6 +9,8 @@ flask-sqlalchemy = "*"
 pyjwt = "*"
 pymysql = "*"
 flask-restful = "*"
+google-auth = "*"
+requests = "*"
 
 [dev-packages]
 

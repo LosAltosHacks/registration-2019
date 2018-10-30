@@ -2,7 +2,7 @@ import os
 from flask_restful import Resource, reqparse
 from .core import api, db
 from .authentication import auth
-from .helper import email
+from .helper import email_string
 
 ## Models
 
@@ -17,7 +17,7 @@ class Subscribe(Resource):
     parser = reqparse.RequestParser()
 
     def __init__(self):
-        self.parser.add_argument('email', type=email, required=True)
+        self.parser.add_argument('email', type=email_string, required=True)
 
     def post(self):
 
@@ -36,7 +36,7 @@ class Subscriptions(Resource):
 
     @auth
     def get(self):
-        return list(map(lambda x: x.email, EmailSubscription.query.all()))
+        return [x.email for x in EmailSubscription.query.all()]
 
 ## Register endpoints
 

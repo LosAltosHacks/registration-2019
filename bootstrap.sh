@@ -1,5 +1,6 @@
 #!/bin/bash
 export FLASK_APP=./registration_2019/core.py
+export LAH_GSUITE_DOMAIN_NAME="losaltoshacks.com"
 
 if [ "$REG_DEBUG" = true ] ; then
     export FLASK_DEBUG=true

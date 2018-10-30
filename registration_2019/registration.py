@@ -3,7 +3,7 @@ import enum
 from sqlalchemy import Column, String, SmallInteger, Integer, Enum, Boolean, ForeignKey, DateTime
 from flask_restful import Resource, reqparse
 from .core import api, db
-from .helper import rand_uuid, email, strn, copy_row
+from .helper import *
 from .authentication import auth
 
 ## Models
@@ -21,7 +21,14 @@ class AcceptanceStatusEnum(enum.Enum):
     queue      = "queue"
     accepted   = "accepted"
 
-class SignupData(db.Model):
+class EmailVerification(db.Model):
+    id          = Column(Integer,     nullable=False, primary_key=True)
+    user_id     = Column(String(36),  nullable=False)
+    email       = Column(String(255), nullable=False)
+    email_token = Column(String(36),  nullable=False, default=rand_uuid)
+    verified    = Column(Boolean,     nullable=False, default=False)
+
+class Signup(db.Model):
     id                    = Column(Integer,                    nullable=False, primary_key=True)
     user_id               = Column(String(36),                 nullable=False, default=rand_uuid)
     first_name            = Column(String(255),                nullable=False)
@@ -31,29 +38,27 @@ class SignupData(db.Model):
     school                = Column(String(255),                nullable=False)
     grade                 = Column(SmallInteger,               nullable=False)
     student_phone_number  = Column(String(255),                nullable=False)
-    guardian_name         = Column(String(255))
-    guardian_email        = Column(String(255))
-    guardian_phone_number = Column(String(255))
     gender                = Column(String(255),                nullable=False)
     tshirt_size           = Column(Enum(TShirtSizeEnum),       nullable=False)
     previous_hackathons   = Column(SmallInteger,               nullable=False)
+    guardian_name         = Column(String(255))
+    guardian_email        = Column(String(255))
+    guardian_phone_number = Column(String(255))
     github_username       = Column(String(255))
     linkedin_profile      = Column(String(255))
     dietary_restrictions  = Column(String(255))
     signed_waver          = Column(Boolean,                    nullable=False, default=False)
-    email_verified        = Column(Boolean,                    nullable=False, default=False)
+    email_verification_id = Column(Integer,                    ForeignKey(EmailVerification.id))
     acceptance_status     = Column(Enum(AcceptanceStatusEnum), nullable=False, default=AcceptanceStatusEnum.none)
     outdated              = Column(Boolean,                    nullable=False, default=False)
+    timestamp             = Column(DateTime,                   nullable=False, default=datetime.datetime.utcnow)
 
-class Signup(db.Model):
-    id        = Column(Integer,    nullable=False,            primary_key=True)
-    user_id   = Column(String(36), nullable=False)
-    data_id   = Column(Integer,    ForeignKey(SignupData.id))
-    timestamp = Column(DateTime,   nullable=False,            default=datetime.datetime.utcnow)
+    email_verification    = db.relationship('EmailVerification', foreign_keys='Signup.email_verification_id')
 
-    data = db.relationship('SignupData', foreign_keys='Signup.data_id')
-
-# NV TODO: Email verification
+    def as_dict(self):
+        result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}
+        result['email_verified'] = self.email_verification.verified
+        return result
 
 ## Helper Functions
 
@@ -61,7 +66,132 @@ def invalid_age(args):
     return args['age'] < 18 and not (args['guardian_name'] and args['guardian_email'] and args['guardian_phone_number'])
 
 def email_in_use(new_email):
-    return SignupData.query.filter_by(email=new_email, outdated=False).count() > 0
+    return Signup.query.filter_by(email=new_email, outdated=False).count() > 0
+
+def clean_signup(signup, extra=[]):
+    return select_keys(signup.as_dict(), ['user_id', 'first_name', 'surname', 'email', 'age', 'school',
+                                          'grade', 'student_phone_number', 'guardian_name',
+                                          'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
+                                          'previous_hackathons', 'github_username', 'linkedin_profile',
+                                          'dietary_restrictions', 'signed_waver', 'acceptance_status',
+                                          'email_verified', 'timestamp', *extra])
+
+def add_signup(signup):
+    db.session.add(signup)
+
+    email_verification = EmailVerification.query.filter_by(email=signup.email, user_id=signup.user_id).scalar()
+
+    if not email_verification:
+        email_verification = EmailVerification(user_id=signup.user_id, email=signup.email)
+        db.session.add(email_verification)
+        db.session.commit()
+        # TODO: Send verification email
+
+    # add the email verification reference
+    signup.email_verification_id = email_verification.id
+
+    db.session.commit()
+
+def modify(user_id, delta):
+
+    # find the most recent signup for user_id
+    old_signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
+
+    if not old_signup:
+        return {"message": "User does not exist"}, 400
+
+    new_signup, changed = copy_row(Signup, old_signup, ignored_columns=['id', 'outdated', 'timestamp', 'email_verified'], overwrite=delta)
+
+    email_verified = delta.get('email_verified')
+    new_verified = email_verified is not None and email_verified != old_signup.email_verification.verified
+
+    # no changes, just return
+    if not changed and not new_verified:
+        return {"status": "ok", "message": "unchanged"}
+
+    # validate new data
+
+    if invalid_age(new_signup.__dict__):
+        return {"message": "Minors must provide guardian information"}, 400
+
+    if old_signup.email != new_signup.email and email_in_use(new_signup.email):
+        # ok to leak "email in use" here, modify is auth'd and only used by the team
+        return {"message": "Email already in use"}, 400
+
+    # validated, update the data
+    if changed:
+        old_signup.outdated = True
+        add_signup(new_signup)
+
+        if new_verified:
+            new_signup.email_verification.verified = email_verified
+    elif new_verified:
+        # only change is email verification, no new signup will be created (since verification is in a separate table)
+        old_signup.email_verification.verified = email_verified
+
+    db.session.commit()
+
+    return {"status": "ok"}
+
+def search(query):
+
+    if not query:
+        return []
+    elif type(query) is str:
+        results = Signup.query.filter((Signup.user_id == query) |
+                                      Signup.first_name.contains(query) |
+                                      Signup.surname.contains(query) |
+                                      Signup.email.contains(query) |
+                                      Signup.student_phone_number.contains(query) |
+                                      Signup.guardian_name.contains(query) |
+                                      Signup.guardian_email.contains(query) |
+                                      Signup.guardian_phone_number.contains(query)).all()
+
+        return [clean_signup(x) for x in results]
+    else:
+        query = remove_none_values(query)
+        email_verified = query.get('email_verified')
+        outdated = query.get('outdated')
+
+        if email_verified is not None:
+            query.pop('email_verified')
+
+        if outdated == '*':
+            query.pop('outdated')
+
+        if outdated is None:
+            results = Signup.query.filter_by(**query, outdated=False)
+        else:
+            results = Signup.query.filter_by(**query)
+
+        return [clean_signup(x,
+                             # include `outdated` field if it was provided in the request
+                             extra=(['outdated'] if outdated is not None else []))
+                for x in results
+                # have to manually check the email verification if it was provided, since it's in another table
+                if (email_verified is None or
+                    x.email_verification.verified == email_verified)]
+
+def list():
+    return [clean_signup(x) for x in Signup.query.filter_by(outdated=False)]
+
+def history(user_id):
+    signups = Signup.query.filter_by(user_id=user_id)
+
+    if signups.count() == 0:
+        return {"message": "User does not exist"}, 400
+    else:
+        return [clean_signup(x, extra=['outdated']) for x in signups]
+
+def delete(user_id):
+        signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
+        if not signup:
+            return {"message": "User does not exist"}, 400
+
+        else:
+            signup.outdated=True
+            db.session.commit()
+            return {"status": "ok"}
 
 ## Endpoints
 
@@ -71,20 +201,20 @@ class SignupEndpoint(Resource):
 
     def __init__(self):
 
-        # NV TODO: Way to automatically create this using the models defined above?
+        # TODO: Way to avoid repetition of all of these types?
         self.parser.add_argument('first_name',            type=strn,           required=True)
         self.parser.add_argument('surname',               type=strn,           required=True)
-        self.parser.add_argument('email',                 type=email,          required=True)
+        self.parser.add_argument('email',                 type=email_string,   required=True)
         self.parser.add_argument('age',                   type=int,            required=True)
         self.parser.add_argument('school',                type=strn,           required=True)
         self.parser.add_argument('grade',                 type=int,            required=True)
-        self.parser.add_argument('student_phone_number',  type=strn,           required=True) # NV TODO: phone_number type
-        self.parser.add_argument('guardian_name',         type=strn)
-        self.parser.add_argument('guardian_email',        type=email)
-        self.parser.add_argument('guardian_phone_number', type=strn) # NV TODO: phone_number type
+        self.parser.add_argument('student_phone_number',  type=strn,           required=True)
         self.parser.add_argument('gender',                type=strn,           required=True)
         self.parser.add_argument('tshirt_size',           type=TShirtSizeEnum, required=True)
         self.parser.add_argument('previous_hackathons',   type=int,            required=True)
+        self.parser.add_argument('guardian_name',         type=strn)
+        self.parser.add_argument('guardian_email',        type=email_string)
+        self.parser.add_argument('guardian_phone_number', type=strn)
         self.parser.add_argument('github_username',       type=strn)
         self.parser.add_argument('linkedin_profile',      type=strn)
         self.parser.add_argument('dietary_restrictions',  type=strn)
@@ -97,18 +227,24 @@ class SignupEndpoint(Resource):
             return {"message": "Minors must provide guardian information"}, 400
 
         if email_in_use(args['email']):
-            return {"message": "Email already in use"}, 400 # NV TODO: Might not want to "leak" this info?
+            # TODO: Send email like "Did you try to register again with different information? Please contact our team at <email> if you'd like to change the data you provided". If their email is verified, also send the new data so they can forward to us to change, and change the message to "...different information? Please forward this email to <email> if you'd like to change the data you provided"
+            return {"status": "ok"}
 
-        data = SignupData(**args)
-        db.session.add(data)
-        db.session.commit()
-
-        signup = Signup(user_id=data.user_id, data_id=data.id)
-
-        db.session.add(signup)
-        db.session.commit()
+        add_signup(Signup(**args))
 
         return {"status": "ok"}
+
+class VerifyEndpoint(Resource):
+
+    def get(self, user_id, email_token):
+        email_verification = EmailVerification.query.filter_by(user_id=user_id, email_token=email_token).scalar()
+
+        if email_verification:
+            email_verification.verified = True
+            db.session.commit()
+            return {"status": "ok"}
+        else:
+            return {"message": "Could not verify"}, 422
 
 class ModifyEndpoint(Resource):
 
@@ -118,62 +254,96 @@ class ModifyEndpoint(Resource):
 
         self.parser.add_argument('first_name',            type=strn)
         self.parser.add_argument('surname',               type=strn)
-        self.parser.add_argument('email',                 type=email)
+        self.parser.add_argument('email',                 type=email_string)
         self.parser.add_argument('age',                   type=int)
         self.parser.add_argument('school',                type=strn)
         self.parser.add_argument('grade',                 type=int)
-        self.parser.add_argument('student_phone_number',  type=strn) # NV TODO: phone_number type
-        self.parser.add_argument('guardian_name',         type=strn)
-        self.parser.add_argument('guardian_email',        type=email)
-        self.parser.add_argument('guardian_phone_number', type=strn) # NV TODO: phone_number type
+        self.parser.add_argument('student_phone_number',  type=strn)
         self.parser.add_argument('gender',                type=strn)
         self.parser.add_argument('tshirt_size',           type=TShirtSizeEnum)
         self.parser.add_argument('previous_hackathons',   type=int)
+        self.parser.add_argument('guardian_name',         type=nil(strn))          # guardian info can be None or empty string (when age is 18+)
+        self.parser.add_argument('guardian_email',        type=nil(email_string))
+        self.parser.add_argument('guardian_phone_number', type=nil(strn))
         self.parser.add_argument('github_username',       type=strn)
         self.parser.add_argument('linkedin_profile',      type=strn)
         self.parser.add_argument('dietary_restrictions',  type=strn)
+        self.parser.add_argument('acceptance_status',     type=AcceptanceStatusEnum)
+        self.parser.add_argument('email_verified',        type=bool)
 
     @auth
-    def post(self, id):
+    def post(self, user_id):
+        args = self.parser.parse_args()
+        return modify(user_id, args)
 
+class SearchEndpoint(Resource):
+
+    parser = reqparse.RequestParser()
+    nested_parser = reqparse.RequestParser()
+
+    def __init__(self):
+
+        self.parser.add_argument('query', type=or_types(strn, dict), required=True)
+
+        self.nested_parser.add_argument('user_id',               type=user_id_string,          location='query')
+        self.nested_parser.add_argument('first_name',            type=strn,                    location='query')
+        self.nested_parser.add_argument('surname',               type=strn,                    location='query')
+        self.nested_parser.add_argument('email',                 type=email_string,            location='query')
+        self.nested_parser.add_argument('age',                   type=int,                     location='query')
+        self.nested_parser.add_argument('school',                type=strn,                    location='query')
+        self.nested_parser.add_argument('grade',                 type=int,                     location='query')
+        self.nested_parser.add_argument('student_phone_number',  type=strn,                    location='query')
+        self.nested_parser.add_argument('gender',                type=strn,                    location='query')
+        self.nested_parser.add_argument('tshirt_size',           type=TShirtSizeEnum,          location='query')
+        self.nested_parser.add_argument('previous_hackathons',   type=int,                     location='query')
+        # guardian info can be None or empty string (when age is 18+)
+        self.nested_parser.add_argument('guardian_name',         type=nil(strn),               location='query')
+        self.nested_parser.add_argument('guardian_email',        type=nil(email_string),       location='query')
+        self.nested_parser.add_argument('guardian_phone_number', type=nil(strn),               location='query')
+        self.nested_parser.add_argument('github_username',       type=strn,                    location='query')
+        self.nested_parser.add_argument('linkedin_profile',      type=strn,                    location='query')
+        self.nested_parser.add_argument('signed_waver',          type=boolean,                 location='query')
+        self.nested_parser.add_argument('dietary_restrictions',  type=strn,                    location='query')
+        self.nested_parser.add_argument('acceptance_status',     type=AcceptanceStatusEnum,    location='query')
+        self.nested_parser.add_argument('email_verified',        type=boolean,                 location='query')
+        self.nested_parser.add_argument('outdated',              type=or_types(boolean, strn), location='query')
+
+    @auth
+    def post(self):
         args = self.parser.parse_args()
 
-        # find the most recent signup data for given user_id
-        old_signup_data = SignupData.query.filter_by(user_id=id, outdated=False).scalar()
+        query = args['query']
 
-        if not old_signup_data:
-            return {"status": "User does not exist"}, 400
+        # parse as Signup dict if provided
+        if type(query) is dict:
+            query = self.nested_parser.parse_args(req=args)
 
-        old_signup_data.outdated = True
+        return search(query)
 
-        # create a copy, and overwrite the specified values
-        data_copy = copy_row(SignupData, old_signup_data, ['id', 'outdated'])
+class ListEndpoint(Resource):
 
-        changed = False
-        for k, v in args.items():
-            if v and data_copy.__dict__[k] != v:
-                data_copy.__setattr__(k, v)
-                changed = True
+    @auth
+    def get(self):
+        return list()
 
-        if changed:
-            if old_signup_data != data_copy:
-                # add the new data to the data tabe
-                db.session.add(data_copy)
-                db.session.commit()
+class HistoryEndpoint(Resource):
 
-                # add a new signup to the signup table
-                signup = Signup(user_id=id, data_id=data_copy.id)
-                db.session.add(signup)
-                db.session.commit()
+    @auth
+    def get(self, user_id):
+        return history(user_id)
 
-        # NV TODO: If email is changed, need to re-verify
-        # NV TODO: if string is empty change to null, make sure to recheck age condition
+class DeleteEndpoint(Resource):
 
-        if changed:
-            return {"status": "ok"}
-        else:
-            return {"status": "ok", "message": "unchanged"}
+    @auth
+    def get(self, user_id):
+        return delete(user_id)
 
-api.add_resource(SignupEndpoint, '/registration/v1/signup')
-api.add_resource(ModifyEndpoint, '/registration/v1/modify/<id>')
+# TODO: Waver Callback (after being accepted, applicants will need to sign a waver through a third party)
 
+api.add_resource(SignupEndpoint,  '/registration/v1/signup')
+api.add_resource(VerifyEndpoint,  '/registration/v1/verify/<user_id>/<email_token>')
+api.add_resource(ModifyEndpoint,  '/registration/v1/modify/<user_id>')
+api.add_resource(ListEndpoint,    '/registration/v1/list')
+api.add_resource(SearchEndpoint,  '/registration/v1/search')
+api.add_resource(HistoryEndpoint, '/registration/v1/history/<user_id>')
+api.add_resource(DeleteEndpoint,  '/registration/v1/delete/<user_id>')
