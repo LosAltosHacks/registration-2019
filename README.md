@@ -18,9 +18,16 @@ To disable authentication (for testing purposes), the environment variable `LAH_
 LAH_DISABLE_AUTHENTICATION=true REG_DEBUG=true ./bootstrap
 ```
 
+If authentication is disabled, the JWT still must be provided however it is not used, so the header can just contain an arbitrary string
+
 To deploy (not in debug mode), the following environment variables must be set:
-- `LAH_EMAIL_LIST_DB`: DB URI (e.g. `mysql+pymysql://<user>:<password>@<host>:<port>/<db-name>`)
+- `LAH_REGISTRATION_DB`: DB URI (e.g. `mysql+pymysql://<user>:<password>@<host>:<port>/<db-name>`)
 - `LAH_JWT_SECRET`: Secret for JWT authentication
+- `LAH_GOOGLE_CLIENT_ID`: Client ID for google oauth
+
+```shell
+LAH_REGISTRATION_DB="..." LAH_JWT_SECRET="*******" LAH_GOOGLE_CLIENT_ID="<...>.apps.googleusercontent.com" ./bootstrap.sh
+```
 
 ## Endpoints
 

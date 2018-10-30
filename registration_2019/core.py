@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 # setup app
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['LAH_EMAIL_LIST_DB'] # required
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['LAH_REGISTRATION_DB'] # required
 
 app.config['JWT_SECRET'] = os.environ.get('LAH_JWT_SECRET')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('LAH_GOOGLE_CLIENT_ID')
