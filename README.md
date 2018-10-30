@@ -36,7 +36,7 @@ To authenticate from `curl`, simple add the following:
 #### `/oauth/v1/login` `POST`
 
 Request body:
-```json
+```js
 {
     "token": "[string]"
 }
@@ -57,7 +57,7 @@ Note that the JWT will expire after 1 day of its creation
 #### `/email_list/v1/subscribe` `POST`
 
 Request body:
-```json
+```js
 {
     "email": "[string]"
 }
@@ -78,7 +78,7 @@ Returns a list of emails on the email list:
 #### `/registration/v1/signup` `POST`
 
 Request body:
-```json
+```js
 {
     # required:
     "first_name": "...",
@@ -155,7 +155,7 @@ Lists all signups (only the most recent and up-to-date data, where `outdated=Tru
 
 Response will be a list of JSON objects, each corresponding to a signup:
 
-```json
+```js
 [
     {
         "user_id": "f12e9cb1-25a4-4ebc-bcaf-0d79a7f95a9f",
