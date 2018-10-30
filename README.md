@@ -90,7 +90,7 @@ Request body:
     "student_phone_number": "5555555555"
     "gender": "...",
     "tshirt_size": "S", # can be "S", "M", "L", or "XL"
-    "previous_hackathons: 0,
+    "previous_hackathons": 0,
 
     # required if age is under 18:
     "guardian_name": "...",
