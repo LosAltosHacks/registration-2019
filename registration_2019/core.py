@@ -2,9 +2,11 @@ import os
 from flask import Flask
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 # setup app
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}}) # provides 'Access-Control-Allow-Origin' header
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['LAH_REGISTRATION_DB'] # required
 
 app.config['JWT_SECRET'] = os.environ.get('LAH_JWT_SECRET')

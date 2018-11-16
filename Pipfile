@@ -11,6 +11,7 @@ pymysql = "*"
 flask-restful = "*"
 google-auth = "*"
 requests = "*"
+flask-cors = "*"
 
 [dev-packages]
 
