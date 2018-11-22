@@ -47,7 +47,7 @@ class Signup(db.Model):
     github_username       = Column(String(255))
     linkedin_profile      = Column(String(255))
     dietary_restrictions  = Column(String(255))
-    signed_waver          = Column(Boolean,                    nullable=False, default=False)
+    signed_waiver         = Column(Boolean,                    nullable=False, default=False)
     email_verification_id = Column(Integer,                    ForeignKey(EmailVerification.id))
     acceptance_status     = Column(Enum(AcceptanceStatusEnum), nullable=False, default=AcceptanceStatusEnum.none)
     outdated              = Column(Boolean,                    nullable=False, default=False)
@@ -73,7 +73,7 @@ def clean_signup(signup, extra=[]):
                                           'grade', 'student_phone_number', 'guardian_name',
                                           'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
                                           'previous_hackathons', 'github_username', 'linkedin_profile',
-                                          'dietary_restrictions', 'signed_waver', 'acceptance_status',
+                                          'dietary_restrictions', 'signed_waiver', 'acceptance_status',
                                           'email_verified', 'timestamp', *extra])
 
 def add_signup(signup):
@@ -302,7 +302,7 @@ class SearchEndpoint(Resource):
         self.nested_parser.add_argument('guardian_phone_number', type=nil(strn),               location='query')
         self.nested_parser.add_argument('github_username',       type=strn,                    location='query')
         self.nested_parser.add_argument('linkedin_profile',      type=strn,                    location='query')
-        self.nested_parser.add_argument('signed_waver',          type=boolean,                 location='query')
+        self.nested_parser.add_argument('signed_waiver',         type=boolean,                 location='query')
         self.nested_parser.add_argument('dietary_restrictions',  type=strn,                    location='query')
         self.nested_parser.add_argument('acceptance_status',     type=AcceptanceStatusEnum,    location='query')
         self.nested_parser.add_argument('email_verified',        type=boolean,                 location='query')
@@ -338,7 +338,7 @@ class DeleteEndpoint(Resource):
     def get(self, user_id):
         return delete(user_id)
 
-# TODO: Waver Callback (after being accepted, applicants will need to sign a waver through a third party)
+# TODO: waiver Callback (after being accepted, applicants will need to sign a waiver through a third party)
 
 api.add_resource(SignupEndpoint,  '/registration/v1/signup')
 api.add_resource(VerifyEndpoint,  '/registration/v1/verify/<user_id>/<email_token>')
