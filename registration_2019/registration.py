@@ -147,7 +147,7 @@ def search(query):
                                       Signup.guardian_email.contains(query) |
                                       Signup.guardian_phone_number.contains(query)).all()
 
-        return [clean_signup(x) for x in results]
+        return [clean_signup(x, extra=['outdated']) for x in results]
     else:
         query = remove_none_values(query)
         email_verified = query.get('email_verified')
