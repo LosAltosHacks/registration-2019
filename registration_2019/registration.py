@@ -86,7 +86,7 @@ def add_signup(signup):
         email_verification = EmailVerification(user_id=signup.user_id, email=signup.email)
         db.session.add(email_verification)
         db.session.commit()
-        send_confirmation_email(signup.email, email_verification.email_token)
+        send_confirmation_email(signup.email, signup.user_id, email_verification.email_token)
 
     # add the email verification reference
     signup.email_verification_id = email_verification.id

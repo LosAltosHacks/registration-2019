@@ -15,7 +15,7 @@ app.config['GSUITE_DOMAIN_NAME'] = os.environ.get('LAH_GSUITE_DOMAIN_NAME')
 app.config['DISABLE_AUTHENTICATION'] = os.environ.get('LAH_DISABLE_AUTHENTICATION')
 app.config['SES_AWS_REGION'] = os.environ.get('LAH_SES_AWS_REGION')
 app.config['SES_SENDER'] = os.environ.get('LAH_SES_SENDER')
-
+app.config['API_ENDPOINT'] = os.environ.get('LAH_API_ENDPOINT')
 
 # setup resp api and database
 api = Api(app)

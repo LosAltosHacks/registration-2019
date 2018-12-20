@@ -24,6 +24,7 @@ To deploy (not in debug mode), the following environment variables must be set:
 - `LAH_REGISTRATION_DB`: DB URI (e.g. `mysql+pymysql://<user>:<password>@<host>:<port>/<db-name>`)
 - `LAH_JWT_SECRET`: Secret for JWT authentication
 - `LAH_GOOGLE_CLIENT_ID`: Client ID for google oauth
+- `LAH_API_ENDPOINT`: The URI of the API endpoint to use when sending verification emails
 - `AWS_ACCESS_KEY_ID`: Amazon access key to send emails through SES
 - `AWS_SECRET_ACCESS_KEY`: Amazon secret key to send emails through SES
 
