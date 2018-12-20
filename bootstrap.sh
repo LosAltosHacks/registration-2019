@@ -1,6 +1,8 @@
 #!/bin/bash
 export FLASK_APP=./registration_2019/core.py
 export LAH_GSUITE_DOMAIN_NAME="losaltoshacks.com"
+export LAH_SES_AWS_REGION="us-west-2"
+export LAH_SES_SENDER="Los Altos Hacks <info@losaltoshacks.com>"
 
 if [ "$REG_DEBUG" = true ] ; then
     export FLASK_DEBUG=true

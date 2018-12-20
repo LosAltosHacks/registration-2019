@@ -12,6 +12,7 @@ flask-restful = "*"
 google-auth = "*"
 requests = "*"
 flask-cors = "*"
+"boto3" = "*"
 
 [dev-packages]
 

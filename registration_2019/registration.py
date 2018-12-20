@@ -5,6 +5,7 @@ from flask_restful import Resource, reqparse
 from .core import api, db
 from .helper import *
 from .authentication import auth
+from .emailing import send_confirmation_email, send_reregistered_email
 
 ## Models
 
@@ -85,7 +86,7 @@ def add_signup(signup):
         email_verification = EmailVerification(user_id=signup.user_id, email=signup.email)
         db.session.add(email_verification)
         db.session.commit()
-        # TODO: Send verification email
+        send_confirmation_email(signup.email, email_verification.email_token)
 
     # add the email verification reference
     signup.email_verification_id = email_verification.id
@@ -227,7 +228,7 @@ class SignupEndpoint(Resource):
             return {"message": "Minors must provide guardian information"}, 400
 
         if email_in_use(args['email']):
-            # TODO: Send email like "Did you try to register again with different information? Please contact our team at <email> if you'd like to change the data you provided". If their email is verified, also send the new data so they can forward to us to change, and change the message to "...different information? Please forward this email to <email> if you'd like to change the data you provided"
+            send_reregistered_email(args['email'])
             return {"status": "ok"}
 
         add_signup(Signup(**args))
@@ -337,6 +338,8 @@ class DeleteEndpoint(Resource):
     @auth
     def get(self, user_id):
         return delete(user_id)
+
+# TODO: Add authenticated endpoint so that we can send custom emails via the admin dashboard? Might not be necessary, but worth a look into.
 
 # TODO: waiver Callback (after being accepted, applicants will need to sign a waiver through a third party)
 

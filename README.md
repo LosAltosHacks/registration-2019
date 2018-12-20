@@ -24,6 +24,8 @@ To deploy (not in debug mode), the following environment variables must be set:
 - `LAH_REGISTRATION_DB`: DB URI (e.g. `mysql+pymysql://<user>:<password>@<host>:<port>/<db-name>`)
 - `LAH_JWT_SECRET`: Secret for JWT authentication
 - `LAH_GOOGLE_CLIENT_ID`: Client ID for google oauth
+- `AWS_ACCESS_KEY_ID`: Amazon access key to send emails through SES
+- `AWS_SECRET_ACCESS_KEY`: Amazon secret key to send emails through SES
 
 ```shell
 LAH_REGISTRATION_DB="..." LAH_JWT_SECRET="*******" LAH_GOOGLE_CLIENT_ID="<...>.apps.googleusercontent.com" ./bootstrap.sh
