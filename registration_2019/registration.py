@@ -1,8 +1,9 @@
 import datetime
 import enum
 from sqlalchemy import Column, String, SmallInteger, Integer, Enum, Boolean, ForeignKey, DateTime
+from flask import redirect
 from flask_restful import Resource, reqparse
-from .core import api, db
+from .core import api, db, app
 from .helper import *
 from .authentication import auth
 from .emailing import send_email_template
@@ -255,7 +256,7 @@ class VerifyEndpoint(Resource):
         if email_verification:
             email_verification.verified = True
             db.session.commit()
-            return {"status": "ok"}
+            return redirect(app.config['CONFIRMATION_REDIRECT'])
         else:
             return {"message": "Could not verify"}, 422
 
