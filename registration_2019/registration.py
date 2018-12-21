@@ -5,6 +5,7 @@ from flask_restful import Resource, reqparse
 from .core import api, db
 from .helper import *
 from .authentication import auth
+from .emailing import send_email_template
 
 ## Models
 
@@ -76,6 +77,16 @@ def clean_signup(signup, extra=[]):
                                           'dietary_restrictions', 'signed_waiver', 'acceptance_status',
                                           'email_verified', 'timestamp', *extra])
 
+def send_email(signup, template):
+    full_name = signup.first_name + " " + signup.surname
+    email_data = select_keys(signup.as_dict(), ['user_id', 'first_name', 'surname', 'email', 'age', 'school',
+                                                'grade', 'student_phone_number', 'guardian_name',
+                                                'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
+                                                'dietary_restrictions', 'signed_waiver', 'acceptance_status'])
+
+    full_data = {**email_data, 'full_name': full_name, 'email_verification_token': signup.email_verification.email_token}
+    send_email_template(full_data, template)
+
 def add_signup(signup):
     db.session.add(signup)
 
@@ -85,12 +96,13 @@ def add_signup(signup):
         email_verification = EmailVerification(user_id=signup.user_id, email=signup.email)
         db.session.add(email_verification)
         db.session.commit()
-        # TODO: Send verification email
 
     # add the email verification reference
     signup.email_verification_id = email_verification.id
-
     db.session.commit()
+
+    if not signup.email_verification.verified:
+        send_email(signup, "confirmation")
 
 def modify(user_id, delta):
 
@@ -227,7 +239,8 @@ class SignupEndpoint(Resource):
             return {"message": "Minors must provide guardian information"}, 400
 
         if email_in_use(args['email']):
-            # TODO: Send email like "Did you try to register again with different information? Please contact our team at <email> if you'd like to change the data you provided". If their email is verified, also send the new data so they can forward to us to change, and change the message to "...different information? Please forward this email to <email> if you'd like to change the data you provided"
+            signup = Signup.query.filter_by(email=args['email'], outdated=False).scalar()
+            #send_email(signup, "reregistered") # TODO: Send reregistered email
             return {"status": "ok"}
 
         add_signup(Signup(**args))
@@ -337,6 +350,8 @@ class DeleteEndpoint(Resource):
     @auth
     def get(self, user_id):
         return delete(user_id)
+
+# TODO: Add authenticated endpoint so that we can send custom emails via the admin dashboard? Might not be necessary, but worth a look into.
 
 # TODO: waiver Callback (after being accepted, applicants will need to sign a waiver through a third party)
 

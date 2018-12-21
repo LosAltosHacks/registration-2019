@@ -139,3 +139,7 @@ def select_keys(dictionary, keys):
     if type(dictionary) is not dict:
         dictionary = dictionary.__dict__
     return {k: dictionary.get(k) for k in keys}
+
+def read_file(filename):
+    with open(filename, 'r') as f:
+        return f.read()
