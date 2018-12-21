@@ -1,0 +1,17 @@
+Hey {first_name},
+
+This email is to let you know that we've received your registration information!
+
+To finish your registration, please verify your email by clicking the following link:
+{api_endpoint}/registration/v1/verify/{user_id}/{email_verification_token}
+
+Thank you - and we'll see you soon!
+
+Los Altos Hacks IV
+3/23 - 3/24 2019
+
+
+This email is intended for {full_name}
+If you have any questions, let us know at info@losaltoshacks.com
+
+Copyright © 2018 Los Altos Hacks. All rights reserved.

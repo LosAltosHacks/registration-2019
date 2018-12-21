@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse
 from .core import api, db
 from .helper import *
 from .authentication import auth
-from .emailing import send_confirmation_email, send_reregistered_email
+from .emailing import send_email_template
 
 ## Models
 
@@ -77,6 +77,16 @@ def clean_signup(signup, extra=[]):
                                           'dietary_restrictions', 'signed_waiver', 'acceptance_status',
                                           'email_verified', 'timestamp', *extra])
 
+def send_email(signup, template):
+    full_name = signup.first_name + " " + signup.surname
+    email_data = select_keys(signup.as_dict(), ['user_id', 'first_name', 'surname', 'email', 'age', 'school',
+                                                'grade', 'student_phone_number', 'guardian_name',
+                                                'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
+                                                'dietary_restrictions', 'signed_waiver', 'acceptance_status'])
+
+    full_data = {**email_data, 'full_name': full_name, 'email_verification_token': signup.email_verification.email_token}
+    send_email_template(full_data, template)
+
 def add_signup(signup):
     db.session.add(signup)
 
@@ -86,12 +96,13 @@ def add_signup(signup):
         email_verification = EmailVerification(user_id=signup.user_id, email=signup.email)
         db.session.add(email_verification)
         db.session.commit()
-        send_confirmation_email(signup.email, signup.user_id, email_verification.email_token)
 
     # add the email verification reference
     signup.email_verification_id = email_verification.id
-
     db.session.commit()
+
+    if not signup.email_verification.verified:
+        send_email(signup, "confirmation")
 
 def modify(user_id, delta):
 
@@ -228,7 +239,8 @@ class SignupEndpoint(Resource):
             return {"message": "Minors must provide guardian information"}, 400
 
         if email_in_use(args['email']):
-            send_reregistered_email(args['email'])
+            signup = Signup.query.filter_by(email=args['email'], outdated=False).scalar()
+            #send_email(signup, "reregistered") # TODO: Send reregistered email
             return {"status": "ok"}
 
         add_signup(Signup(**args))
