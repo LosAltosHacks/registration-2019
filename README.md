@@ -99,6 +99,7 @@ Request body:
     "grade": 12,
     "student_phone_number": "5555555555"
     "gender": "...",
+    "ethnicity": "..."
     "tshirt_size": "S", # can be "S", "M", "L", or "XL"
     "previous_hackathons": 0,
 
@@ -177,6 +178,7 @@ Response will be a list of JSON objects, each corresponding to a signup:
         "grade": 12,
         "student_phone_number": "555-555-5555",
         "gender": "male",
+        "ethnicity": "Ethnicity",
         "tshirt_size": "L",
         "previous_hackathons": 0,
         "guardian_name": "",

@@ -41,6 +41,7 @@ class Signup(db.Model):
     grade                 = Column(SmallInteger,               nullable=False)
     student_phone_number  = Column(String(255),                nullable=False)
     gender                = Column(String(255),                nullable=False)
+    ethnicity             = Column(String(255))
     tshirt_size           = Column(Enum(TShirtSizeEnum),       nullable=False)
     previous_hackathons   = Column(SmallInteger,               nullable=False)
     guardian_name         = Column(String(255))
@@ -73,17 +74,18 @@ def email_in_use(new_email):
 def clean_signup(signup, extra=[]):
     return select_keys(signup.as_dict(), ['user_id', 'first_name', 'surname', 'email', 'age', 'school',
                                           'grade', 'student_phone_number', 'guardian_name',
-                                          'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
-                                          'previous_hackathons', 'github_username', 'linkedin_profile',
-                                          'dietary_restrictions', 'signed_waiver', 'acceptance_status',
-                                          'email_verified', 'timestamp', *extra])
+                                          'guardian_email', 'guardian_phone_number', 'gender', 'ethnicity',
+                                          'tshirt_size', 'previous_hackathons', 'github_username',
+                                          'linkedin_profile', 'dietary_restrictions', 'signed_waiver',
+                                          'acceptance_status', 'email_verified', 'timestamp', *extra])
 
 def send_email(signup, template):
     full_name = signup.first_name + " " + signup.surname
     email_data = select_keys(signup.as_dict(), ['user_id', 'first_name', 'surname', 'email', 'age', 'school',
                                                 'grade', 'student_phone_number', 'guardian_name',
-                                                'guardian_email', 'guardian_phone_number', 'gender', 'tshirt_size',
-                                                'dietary_restrictions', 'signed_waiver', 'acceptance_status'])
+                                                'guardian_email', 'guardian_phone_number', 'gender', 'ethnicity',
+                                                'tshirt_size', 'dietary_restrictions', 'signed_waiver',
+                                                'acceptance_status'])
 
     full_data = {**email_data, 'full_name': full_name, 'email_verification_token': signup.email_verification.email_token}
     send_email_template(full_data, template)
@@ -223,6 +225,7 @@ class SignupEndpoint(Resource):
         self.parser.add_argument('grade',                 type=int,            required=True)
         self.parser.add_argument('student_phone_number',  type=strn,           required=True)
         self.parser.add_argument('gender',                type=strn,           required=True)
+        self.parser.add_argument('ethnicity',             type=strn)
         self.parser.add_argument('tshirt_size',           type=TShirtSizeEnum, required=True)
         self.parser.add_argument('previous_hackathons',   type=int,            required=True)
         self.parser.add_argument('guardian_name',         type=strn)
@@ -274,6 +277,7 @@ class ModifyEndpoint(Resource):
         self.parser.add_argument('grade',                 type=int)
         self.parser.add_argument('student_phone_number',  type=strn)
         self.parser.add_argument('gender',                type=strn)
+        self.parser.add_argument('ethnicity',             type=strn)
         self.parser.add_argument('tshirt_size',           type=TShirtSizeEnum)
         self.parser.add_argument('previous_hackathons',   type=int)
         self.parser.add_argument('guardian_name',         type=nil(strn))          # guardian info can be None or empty string (when age is 18+)
@@ -308,6 +312,7 @@ class SearchEndpoint(Resource):
         self.nested_parser.add_argument('grade',                 type=int,                     location='query')
         self.nested_parser.add_argument('student_phone_number',  type=strn,                    location='query')
         self.nested_parser.add_argument('gender',                type=strn,                    location='query')
+        self.nested_parser.add_argument('ethnicity',             type=strn,                    location='query')
         self.nested_parser.add_argument('tshirt_size',           type=TShirtSizeEnum,          location='query')
         self.nested_parser.add_argument('previous_hackathons',   type=int,                     location='query')
         # guardian info can be None or empty string (when age is 18+)
