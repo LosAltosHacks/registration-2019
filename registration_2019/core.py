@@ -26,6 +26,7 @@ db = SQLAlchemy(app)
 import registration_2019.email_list
 import registration_2019.authentication
 import registration_2019.registration
+import registration_2019.mentor
 
 # create db tables
 db.create_all()
