@@ -21,7 +21,7 @@ def read_templates(*templates):
 
 HTML_TEMPLATE = read_file('email_templates/html')
 
-TEMPLATES = read_templates("confirmation")
+TEMPLATES = read_templates("confirmation", "mentor_confirmation")
 
 def format_email(template, data):
     text = TEMPLATES[template]['text'].format(**data)

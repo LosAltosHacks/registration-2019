@@ -56,8 +56,10 @@ def send_email(mentor, template):
                                                 'tshirt_size', 'dietary_restrictions', 'signed_waiver',
                                                 'acceptance_status'])
 
-    full_data = {**email_data, 'full_name': mentor.name, 'email_verification_token': mentor.email_verification.email_token}
-    # TODO send_email_template(full_data, template)
+    first_name = mentor.name.split(' ', 1)[0]
+
+    full_data = {**email_data, 'full_name': mentor.name, 'first_name': first_name, 'email_verification_token': mentor.email_verification.email_token}
+    send_email_template(full_data, template)
 
 def add_mentor(mentor):
     db.session.add(mentor)
@@ -192,7 +194,7 @@ class MentorEndpoint(Resource):
 
         if email_in_use(args['email']):
             mentor = Mentor.query.filter_by(email=args['email'], outdated=False).scalar()
-            #send_email(mentor, "reregistered") # TODO: Send reregistered email
+            #send_email(mentor, "mentor_reregistered") # TODO: Send reregistered email
             return {"status": "ok"}
 
         add_mentor(Mentor(**args))
