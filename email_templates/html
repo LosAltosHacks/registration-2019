@@ -187,9 +187,8 @@
 												<!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;"><![endif]-->
 												<div style="color:#141414;font-family:'Poppins', Helvetica, Arial, sans-serif;line-height:120%; padding-right: 10px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;">
 													<div style="font-size:12px;line-height:14px;font-family:'Poppins', Helvetica, Arial, sans-serif;color:#141414;text-align:left;">
-														<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="line-height: 18px; font-size: 15px;">Hey {first_name},</span></p>
-														<p style="margin: 0;font-size: 12px;line-height: 14px">&#160;</p>
-														<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 15px; line-height: 18px;">{body}</span></p>
+
+	                                                                                                  <p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 15px; line-height: 18px;">{body}</span></p>
 														<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 15px; line-height: 18px;">&#160;</span></p>
 														<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 15px; line-height: 18px;">Los Altos Hacks IV</span></p>
 														<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="font-size: 15px; line-height: 18px;">3/23 - 3/24 2019</span></p>
