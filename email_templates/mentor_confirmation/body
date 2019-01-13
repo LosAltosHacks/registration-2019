@@ -1,3 +1,7 @@
+<p style="margin: 0;font-size: 12px;line-height: 14px"><span style="line-height: 18px; font-size: 15px;">Hi {first_name},</span></p>
+
+<p style="margin: 0;font-size: 12px;line-height: 14px">&#160;</p>
+
 <p style="margin: 0;font-size: 12px;line-height: 14px"><span style="line-height: 18px; font-size: 15px;">This email is to let you know that we've received your mentor application information! To complete your application, please verify your email by clicking <a href="{api_endpoint}/mentor/v1/verify/{mentor_id}/{email_verification_token}" style="color:#17A3F6;text-decoration: none;" title="Verify your email">here</a>.</span></p>
 
 <p style="margin: 0;font-size: 12px;line-height: 14px">&#160;</p>
