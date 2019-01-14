@@ -25,6 +25,7 @@ class Mentor(db.Model):
     phone                 = Column(String(255),                nullable=False)
     email                 = Column(String(255),                nullable=False)
     over_18               = Column(Boolean,                    nullable=False)
+    skillset              = Column(String(1000))
     tshirt_size           = Column(Enum(TShirtSizeEnum),       nullable=False)
     dietary_restrictions  = Column(String(255))
     email_verification_id = Column(Integer,                    ForeignKey(MentorEmailVerification.id))
