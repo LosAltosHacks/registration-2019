@@ -49,7 +49,8 @@ def email_in_use(new_email):
 def clean_mentor(mentor, extra=[]):
     return select_keys(mentor.as_dict(), ['mentor_id', 'name', 'email', 'phone', 'tshirt_size',
                                           'skillset', 'dietary_restrictions', 'signed_waiver',
-                                          'acceptance_status', 'email_verified', 'timestamp', *extra])
+                                          'over_18', 'acceptance_status', 'email_verified', 
+                                          'timestamp', *extra])
 
 def send_email(mentor, template):
     email_data = select_keys(mentor.as_dict(), ['mentor_id', 'name', 'email', 'phone'
