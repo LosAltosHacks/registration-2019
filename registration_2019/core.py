@@ -27,6 +27,7 @@ import registration_2019.email_list
 import registration_2019.authentication
 import registration_2019.registration
 import registration_2019.mentor
+import registration_2019.dayof
 
 # create db tables
 db.create_all()

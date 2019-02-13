@@ -30,6 +30,21 @@ class EmailVerification(db.Model):
     email_token = Column(String(36),  nullable=False, default=rand_uuid)
     verified    = Column(Boolean,     nullable=False, default=False)
 
+# This has to be in this file to avoid circular dependencies in dayof.py
+# Actual logic related to this data is in dayof.py
+class SignIn(db.Model):
+    id          = Column(Integer,     nullable=False, primary_key=True)
+    badge_data  = Column(String(128),  nullable=False)
+    signed_out  = Column(Boolean, nullable=False, default=False)
+    meal_1      = Column(SmallInteger, nullable=False, default=0)
+    meal_2      = Column(SmallInteger, nullable=False, default=0)
+    meal_3      = Column(SmallInteger, nullable=False, default=0)
+    meal_4      = Column(SmallInteger, nullable=False, default=0)
+    meal_5      = Column(SmallInteger, nullable=False, default=0)
+    meal_7      = Column(SmallInteger, nullable=False, default=0)
+    meal_8      = Column(SmallInteger, nullable=False, default=0)
+    meal_9      = Column(SmallInteger, nullable=False, default=0)
+
 class Signup(db.Model):
     id                    = Column(Integer,                    nullable=False, primary_key=True)
     user_id               = Column(String(36),                 nullable=False, default=rand_uuid)
@@ -52,11 +67,13 @@ class Signup(db.Model):
     dietary_restrictions  = Column(String(255))
     signed_waiver         = Column(Boolean,                    nullable=False, default=False)
     email_verification_id = Column(Integer,                    ForeignKey(EmailVerification.id))
+    sign_in_id             = Column(Integer,                    ForeignKey(SignIn.id), nullable=True)
     acceptance_status     = Column(Enum(AcceptanceStatusEnum), nullable=False, default=AcceptanceStatusEnum.none)
     outdated              = Column(Boolean,                    nullable=False, default=False)
     timestamp             = Column(DateTime,                   nullable=False, default=datetime.datetime.utcnow)
 
     email_verification    = db.relationship('EmailVerification', foreign_keys='Signup.email_verification_id')
+    sign_in                = db.relationship('SignIn', foreign_keys='Signup.sign_in_id')
 
     def as_dict(self):
         result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}
