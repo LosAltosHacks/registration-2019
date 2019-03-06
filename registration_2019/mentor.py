@@ -224,7 +224,7 @@ class MentorModifyEndpoint(Resource):
         self.parser.add_argument('email',                 type=email_string)
         self.parser.add_argument('phone',                 type=strn)
         self.parser.add_argument('over_18',               type=bool)
-        self.parser.add_argument('skkillset',             type=strn)
+        self.parser.add_argument('skillset',              type=strn)
         self.parser.add_argument('tshirt_size',           type=TShirtSizeEnum)
         self.parser.add_argument('dietary_restrictions',  type=strn)
         self.parser.add_argument('acceptance_status',     type=AcceptanceStatusEnum)
