@@ -8,6 +8,10 @@ from .helper import *
 from .authentication import auth
 
 ## Models
+class GuestKindEnum(enum.Enum):
+    sponsor    = "sponsor"
+    chaperone  = "chaperone"
+    judge      = "judge"
 
 class Chaperone(db.Model):
     id                    = Column(Integer,                    nullable=False, primary_key=True)
@@ -15,6 +19,7 @@ class Chaperone(db.Model):
     name                  = Column(String(255),                nullable=False)
     phone                 = Column(String(255),                nullable=True)
     email                 = Column(String(255),                nullable=False)
+    kind                  = Column(Enum(GuestKindEnum),        nullable=False)
     signed_waiver         = Column(Boolean,                    nullable=False, default=False)
     outdated              = Column(Boolean,                    nullable=False, default=False)
     timestamp             = Column(DateTime,                   nullable=False, default=datetime.datetime.utcnow)
@@ -30,7 +35,7 @@ def email_in_use(new_email):
 
 def clean_chaperone(chaperone, extra=[]):
     return select_keys(chaperone.as_dict(), ['chaperone_id', 'name', 'email', 'phone',
-                                          'signed_waiver', 'timestamp', *extra])
+                                          'signed_waiver', 'timestamp', 'kind', *extra])
 
 
 def add_chaperone(chaperone):
@@ -117,6 +122,7 @@ class ChaperoneEndpoint(Resource):
         self.parser.add_argument('name',                  type=strn,           required=True)
         self.parser.add_argument('phone',                 type=strn,           required=False)
         self.parser.add_argument('email',                 type=email_string,   required=True)
+        self.parser.add_argument('kind',                  type=GuestKindEnum,  required=True)
 
     @auth
     def post(self):
@@ -142,6 +148,7 @@ class ChaperoneModifyEndpoint(Resource):
         self.parser.add_argument('email',                 type=email_string)
         self.parser.add_argument('phone',                 type=strn)
         self.parser.add_argument('signed_waiver',         type=bool)
+        self.parser.add_argument('kind',                  type=GuestKindEnum)
 
     @auth
     def post(self, chaperone_id):
