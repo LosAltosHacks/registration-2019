@@ -29,6 +29,7 @@ import registration_2019.registration
 import registration_2019.mentor
 import registration_2019.chaperone
 import registration_2019.dayof
+import registration_2019.discord
 
 # create db tables
 db.create_all()
