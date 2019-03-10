@@ -4,7 +4,7 @@ from .helper import *
 from .authentication import auth
 from .chaperone import Chaperone
 from .mentor import Mentor
-from .registration import Signup
+from .registration import Signup, AcceptanceStatusEnum
 
 ## Helpers
 
@@ -31,6 +31,8 @@ def get_info_from_email(email):
     if attendee:
         if not attendee.email_verification.verified:
             return {'message': 'Email not verified'}, 400
+        if attendee.acceptance_status != AcceptanceStatusEnum.accepted:
+            return {'message': 'Not accepted', 'current_status': attendee.acceptance_status}, 400
         return {
             'role': 'attendee',
             'name': attendee.first_name + ' ' + attendee.surname,
