@@ -13,9 +13,9 @@ class GuestKindEnum(enum.Enum):
     chaperone  = "chaperone"
     judge      = "judge"
 
-class Chaperone(db.Model):
+class Guest(db.Model):
     id                    = Column(Integer,                    nullable=False, primary_key=True)
-    chaperone_id          = Column(String(36),                 nullable=False, default=rand_uuid)
+    guest_id              = Column(String(36),                 nullable=False, default=rand_uuid)
     name                  = Column(String(255),                nullable=False)
     phone                 = Column(String(255),                nullable=True)
     email                 = Column(String(255),                nullable=False)
@@ -31,40 +31,40 @@ class Chaperone(db.Model):
 ## Helper Functions
 
 def email_in_use(new_email):
-    return Chaperone.query.filter_by(email=new_email, outdated=False).count() > 0
+    return Guest.query.filter_by(email=new_email, outdated=False).count() > 0
 
-def clean_chaperone(chaperone, extra=[]):
-    return select_keys(chaperone.as_dict(), ['chaperone_id', 'name', 'email', 'phone',
-                                          'signed_waiver', 'timestamp', 'kind', *extra])
+def clean_guest(guest, extra=[]):
+    return select_keys(guest.as_dict(), ['guest_id', 'name', 'email', 'phone',
+                                         'signed_waiver', 'timestamp', 'kind', *extra])
 
 
-def add_chaperone(chaperone):
-    db.session.add(chaperone)
+def add_guest(guest):
+    db.session.add(guest)
     db.session.commit()
 
-def modify(chaperone_id, delta):
+def modify(guest_id, delta):
 
-    # find the most recent chaperone for chaperone_id
-    old_chaperone = Chaperone.query.filter_by(chaperone_id=chaperone_id, outdated=False).scalar()
+    # find the most recent guest for guest_id
+    old_guest = Guest.query.filter_by(guest_id=guest_id, outdated=False).scalar()
 
-    if not old_chaperone:
-        return {"message": "Chaperone does not exist"}, 400
+    if not old_guest:
+        return {"message": "Guest does not exist"}, 400
 
-    new_chaperone, changed = copy_row(Chaperone, old_chaperone, ignored_columns=['id', 'outdated', 'timestamp'], overwrite=delta)
+    new_guest, changed = copy_row(Guest, old_guest, ignored_columns=['id', 'outdated', 'timestamp'], overwrite=delta)
 
     # no changes, just return
     if not changed and not new_verified:
         return {"status": "ok", "message": "unchanged"}
 
     # validate new data
-    if old_chaperone.email != new_chaperone.email and email_in_use(new_chaperone.email):
+    if old_guest.email != new_guest.email and email_in_use(new_guest.email):
         # ok to leak "email in use" here, modify is auth'd and only used by the team
         return {"message": "Email already in use"}, 400
 
     # validated, update the data
     if changed:
-        old_chaperone.outdated = True
-        add_chaperone(new_chaperone)
+        old_guest.outdated = True
+        add_gues(new_guest)
 
     db.session.commit()
 
@@ -75,12 +75,12 @@ def search(query):
     if not query:
         return []
     elif type(query) is str:
-        results = Chaperone.query.filter((Chaperone.chaperone_id == query) |
-                                          Chaperone.name.contains(query) |
-                                          Chaperone.email.contains(query) |
-                                          Chaperone.phone.contains(query)).all()
+        results = Guest.query.filter((Guest.guest_id == query) |
+                                      Guest.name.contains(query) |
+                                      Guest.email.contains(query) |
+                                      Guest.phone.contains(query)).all()
 
-        return [clean_chaperone(x, extra=['outdated']) for x in results]
+        return [clean_guest(x, extra=['outdated']) for x in results]
     else:
         query = remove_none_values(query)
         outdated = query.get('outdated')
@@ -89,31 +89,31 @@ def search(query):
             query.pop('outdated')
 
         if outdated is None:
-            results = Chaperone.query.filter_by(**query, outdated=False)
+            results = Guest.query.filter_by(**query, outdated=False)
         else:
-            results = Chaperone.query.filter_by(**query)
+            results = Guest.query.filter_by(**query)
 
-        return [clean_chaperone(x,
+        return [clean_guest(x,
                              # include `outdated` field if it was provided in the request
                              extra=(['outdated'] if outdated is not None else []))
                 for x in results]
 
 def list():
-    return [clean_chaperone(x) for x in Chaperone.query.filter_by(outdated=False)]
+    return [clean_guest(x) for x in Guest.query.filter_by(outdated=False)]
 
-def delete(chaperone_id):
-        chaperone = Chaperone.query.filter_by(chaperone_id=chaperone_id, outdated=False).scalar()
-        if not chaperone:
-            return {"message": "Chaperone does not exist"}, 400
+def delete(guest_id):
+        guest = Guest.query.filter_by(guest_id=guest_id, outdated=False).scalar()
+        if not guest:
+            return {"message": "Guest does not exist"}, 400
 
         else:
-            chaperone.outdated=True
+            guest.outdated=True
             db.session.commit()
             return {"status": "ok"}
 
 ## Endpoints
 
-class ChaperoneEndpoint(Resource):
+class GuestEndpoint(Resource):
 
     parser = reqparse.RequestParser()
 
@@ -130,15 +130,15 @@ class ChaperoneEndpoint(Resource):
         args = self.parser.parse_args()
 
         if email_in_use(args['email']):
-            chaperone = Chaperone.query.filter_by(email=args['email'], outdated=False).scalar()
+            guest = Guest.query.filter_by(email=args['email'], outdated=False).scalar()
             return {"status": "ok",
-                    "message": "chaperone already added (by email)"}
+                    "message": "Guest already added (by email)"}
 
-        add_chaperone(Chaperone(**args))
+        add_guest(Guest(**args))
 
         return {"status": "ok"}
 
-class ChaperoneModifyEndpoint(Resource):
+class GuestModifyEndpoint(Resource):
 
     parser = reqparse.RequestParser()
 
@@ -151,11 +151,11 @@ class ChaperoneModifyEndpoint(Resource):
         self.parser.add_argument('kind',                  type=GuestKindEnum)
 
     @auth
-    def post(self, chaperone_id):
+    def post(self, guest_id):
         args = self.parser.parse_args()
-        return modify(chaperone_id, args)
+        return modify(guest_id, args)
 
-class ChaperoneSearchEndpoint(Resource):
+class GuestSearchEndpoint(Resource):
 
     parser = reqparse.RequestParser()
     nested_parser = reqparse.RequestParser()
@@ -164,7 +164,7 @@ class ChaperoneSearchEndpoint(Resource):
 
         self.parser.add_argument('query', type=or_types(strn, dict), required=True)
 
-        self.nested_parser.add_argument('chaperone_id',          type=user_id_string,          location='query')
+        self.nested_parser.add_argument('guest_id',              type=user_id_string,          location='query')
         self.nested_parser.add_argument('name',                  type=strn,                    location='query')
         self.nested_parser.add_argument('email',                 type=email_string,            location='query')
         self.nested_parser.add_argument('phone',                 type=strn,                    location='query')
@@ -177,28 +177,28 @@ class ChaperoneSearchEndpoint(Resource):
 
         query = args['query']
 
-        # parse as Chaperone dict if provided
+        # parse as Guest dict if provided
         if type(query) is dict:
             query = self.nested_parser.parse_args(req=args)
 
         return search(query)
 
-class ChaperoneListEndpoint(Resource):
+class GuestListEndpoint(Resource):
 
     @auth
     def get(self):
         return list()
 
-class ChaperoneDeleteEndpoint(Resource):
+class GuestDeleteEndpoint(Resource):
 
     @auth
-    def get(self, chaperone_id):
-        return delete(chaperone_id)
+    def get(self, guest_id):
+        return delete(guest_id)
 
 # TODO: waiver Callback
 
-api.add_resource(ChaperoneEndpoint,        '/chaperone/v1/signup')
-api.add_resource(ChaperoneModifyEndpoint,  '/chaperone/v1/modify/<chaperone_id>')
-api.add_resource(ChaperoneListEndpoint,    '/chaperone/v1/list')
-api.add_resource(ChaperoneSearchEndpoint,  '/chaperone/v1/search')
-api.add_resource(ChaperoneDeleteEndpoint,  '/chaperone/v1/delete/<chaperone_id>')
+api.add_resource(GuestEndpoint,        '/guest/v1/signup')
+api.add_resource(GuestModifyEndpoint,  '/guest/v1/modify/<guest_id>')
+api.add_resource(GuestListEndpoint,    '/guest/v1/list')
+api.add_resource(GuestSearchEndpoint,  '/guest/v1/search')
+api.add_resource(GuestDeleteEndpoint,  '/guest/v1/delete/<guest_id>')

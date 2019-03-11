@@ -2,7 +2,7 @@ from flask_restful import Resource, reqparse
 from .core import api, db, app
 from .helper import *
 from .authentication import auth
-from .chaperone import Chaperone
+from .guest import Guest
 from .mentor import Mentor
 from .registration import Signup, AcceptanceStatusEnum
 
@@ -10,7 +10,7 @@ from .registration import Signup, AcceptanceStatusEnum
 
 def get_info_from_email(email):
     # Search through all attendees to find one with the right email
-    # Priority order is mentor, chaperone-types, attendee
+    # Priority order is mentor, guest-types, attendee
     mentor = Mentor.query.filter_by(email=email, outdated=False).scalar()
     if mentor:
         if not mentor.email_verification.verified:
@@ -20,11 +20,11 @@ def get_info_from_email(email):
             'name': mentor.name,
         }, 200
 
-    chaperone = Chaperone.query.filter_by(email=email, outdated=False).scalar()
-    if chaperone:
+    guest = Guest.query.filter_by(email=email, outdated=False).scalar()
+    if guest:
         return {
-            'role': chaperone.kind,
-            'name': chaperone.name,
+            'role': guest.kind,
+            'name': guest.name,
         }, 200
 
     attendee = Signup.query.filter_by(email=email, outdated=False).scalar()
@@ -53,4 +53,4 @@ class DiscordVerifyEndpoint(Resource):
         args = self.parser.parse_args()
         return get_info_from_email(args['email'])
 
-api.add_resource(DiscordVerifyEndpoint,  '/registration/v1/discord-verify')
+api.add_resource(DiscordVerifyEndpoint, '/discord/v1/discord-verify')

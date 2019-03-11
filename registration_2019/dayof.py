@@ -97,6 +97,6 @@ class MealLine(Resource):
         args = self.parser.parse_args()
         return meal_line(args)
 
-api.add_resource(SignInEndpoint,  '/registration/v1/sign-in')
-api.add_resource(SignOutEndpoint, '/registration/v1/sign-out')
-api.add_resource(MealLine,        '/registration/v1/meal')
+api.add_resource(SignInEndpoint,  '/dayof/v1/sign-in')
+api.add_resource(SignOutEndpoint, '/dayof/v1/sign-out')
+api.add_resource(MealLine,        '/dayof/v1/meal')

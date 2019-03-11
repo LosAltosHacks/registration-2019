@@ -288,7 +288,7 @@ class MentorDeleteEndpoint(Resource):
 
 # TODO: waiver Callback (after being accepted, applicants will need to sign a waiver through a third party)
 
-api.add_resource(MentorEndpoint,  '/mentor/v1/signup')
+api.add_resource(MentorEndpoint,        '/mentor/v1/signup')
 api.add_resource(MentorVerifyEndpoint,  '/mentor/v1/verify/<mentor_id>/<email_token>')
 api.add_resource(MentorModifyEndpoint,  '/mentor/v1/modify/<mentor_id>')
 api.add_resource(MentorListEndpoint,    '/mentor/v1/list')

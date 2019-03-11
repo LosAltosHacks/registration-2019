@@ -234,9 +234,9 @@ Response will be among:
 - `400`, `{"message": "User does not exist"}`
 - `200`, `{"status": "ok"}`
 
-### Chaperone
+### Guest
 
-#### `/chaperone/v1/signup` `POST` (JWT authenticated)
+#### `/guest/v1/signup` `POST` (JWT authenticated)
 
 Request body:
 ```js
@@ -252,13 +252,13 @@ Request body:
 
 Responses will be among the following:
 - `200`: `{"status": "ok"}`
-- `200`: `{"status": "ok", "message": "chaperone already added (by email)"}`
+- `200`: `{"status": "ok", "message": "Guest already added (by email)"}`
 - `400`: `{"message": {...}}` (detailed `reqparse` error if parameters are incorrect)
 
-#### `/chaperone/v1/modify/<chaperone_id>` `POST` (JWT authenticated)
+#### `/guest/v1/modify/<guest_id>` `POST` (JWT authenticated)
 
 Request body:
-Same as to chaperone `signup` endpoint, except all fields are optional
+Same as to guest `signup` endpoint, except all fields are optional
 
 Response will be among:
 - `200`: `{"status": "ok"}`
@@ -266,32 +266,32 @@ Response will be among:
 - `400`: `{"message": "Email already in use"}`
 - `400`: `{"message": {...}}` (detailed `reqparse` error if parameters are incorrect)
 
-#### `/chaperone/v1/list` `GET` (JWT authenticated)
+#### `/guest/v1/list` `GET` (JWT authenticated)
 
-Lists all chaperones (only the most recent and up-to-date data, where `outdated=True`)
+Lists all guests (only the most recent and up-to-date data, where `outdated=True`)
 
-Response will be a list of JSON objects, each corresponding to a chaperone
+Response will be a list of JSON objects, each corresponding to a guest
 
 #### `/registration/v1/search` `POST` (JWT Authenticated)
 
 Request body should be a JSON object with a single key `"query"`
 
 The query can be a string, in which case it is checked against each of the following conditions:
-- `chaperone_id` equals query
+- `guest_id` equals query
 - `name` contains query
 - `email` contains query
 - `phone` contains query
 
-The query can also be a JSON object, accepting (optionally) each of the fields returned in the chaperone `list` endpoint, except for `timestamp`
+The query can also be a JSON object, accepting (optionally) each of the fields returned in the guest `list` endpoint, except for `timestamp`
 
 If `outdated` is provided in the request, it will also be provided in the response (otherwise it will be assumed false and omitted)
 
 `outdated` can also have a value of `*`, in which case both current and outdated signups will be returns
 
-#### `/chaperone/v1/delete/<chaperone_id>` `GET` (JWT Authenticated)
+#### `/guest/v1/delete/<guest_id>` `GET` (JWT Authenticated)
 
 Deletes the user from the database (internally just sets `outdated` to true for all of the user's signups)
 
 Response will be among:
-- `400`, `{"message": "Chaperone does not exist"}`
+- `400`, `{"message": "Guest does not exist"}`
 - `200`, `{"status": "ok"}`
