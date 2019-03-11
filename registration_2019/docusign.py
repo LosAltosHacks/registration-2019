@@ -4,18 +4,21 @@ import base64
 from flask_restful import Resource, reqparse, abort
 from flask         import request
 from .core         import app, api, db
+from .helper       import re_matches
 from .registration import Signup
 from .mentor       import Mentor
 from .guest        import Guest
 
 # @basic_auth decorator
 
+auth_str = re_matches("Basic ([0-9a-zA-Z-]+)$", "authentication token", 1)
+
 auth_parser = reqparse.RequestParser()
-auth_parser.add_argument('authorization', type=str, required=True, location='headers')
+auth_parser.add_argument('authorization', type=auth_str, required=True, location='headers')
 
 def is_authenticated(auth):
   try:
-      decoded = base64.b64decode(auth)
+      decoded = base64.b64decode(auth).decode("utf-8")
   except:
     return False
 
