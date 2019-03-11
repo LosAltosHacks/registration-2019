@@ -23,7 +23,7 @@ def get_info_from_email(email):
     guest = Guest.query.filter_by(email=email, outdated=False).scalar()
     if guest:
         return {
-            'role': guest.kind,
+            'role': guest.kind.value,
             'name': guest.name,
         }, 200
 
@@ -31,8 +31,8 @@ def get_info_from_email(email):
     if attendee:
         if not attendee.email_verification.verified:
             return {'message': 'Email not verified'}, 400
-        if attendee.acceptance_status != AcceptanceStatusEnum.accepted and attendee.acceptance_status != AcceptanceStatusEnum.waitlisted:
-            return {'message': 'Not accepted', 'current_status': attendee.acceptance_status}, 400
+        if attendee.acceptance_status.value not in ("accepted", "whitelisted"):
+            return {'message': 'Not accepted', 'current_status': attendee.acceptance_status.value}, 400
         return {
             'role': 'attendee',
             'name': attendee.first_name + ' ' + attendee.surname,
