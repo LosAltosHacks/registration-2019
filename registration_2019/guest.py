@@ -64,7 +64,7 @@ def modify(guest_id, delta):
     # validated, update the data
     if changed:
         old_guest.outdated = True
-        add_gues(new_guest)
+        add_guest(new_guest)
 
     db.session.commit()
 
