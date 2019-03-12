@@ -6,22 +6,46 @@ from flask_restful import Resource, reqparse
 from .core import api, db, app
 from .helper import *
 from .authentication import auth
-from .registration import Signup, SignIn
+from .registration import Signup
+from .mentor import Mentor
+from .guest import Guest
+from .dayof_model import SignIn
 
 # TODO write actual regex
 badge_data = re_matches(".*", "badge data")
 
 def sign_in(user_id, badge_data):
     signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
-    if signup and signup.sign_in:
-        return {"message": "User already signed in"}, 400
-    sign_in = SignIn(badge_data=badge_data)
-    db.session.add(sign_in)
-    # Could use the modify method, but interaction would be non-trivial given that its designed for forward facing API
-    signup.sign_in = sign_in
-    db.session.commit()
+    if signup:
+        if signup.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        signup.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
 
-    return {"status": "ok"}
+    mentor = Mentor.query.filter_by(mentor_id=user_id, outdated=False).scalar()
+    if mentor:
+        if mentor.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        mentor.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
+
+    guest = Guest.query.filter_by(guest_id=user_id, outdated=False).scalar()
+    if guest:
+        if guest.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        guest.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
+
+    return {"message": "User ID not found"}, 400
 
 def sign_out(badge_data):
     sign_in = SignIn.query.filter_by(badge_data=badge_data).scalar()
@@ -65,7 +89,11 @@ class SignInEndpoint(Resource):
         return sign_in(args['user_id'], args['badge_data'])
 
     def get(self):
-        return Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count()
+        return {
+            'attendee': Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
+            'mentor': Mentor.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
+            'guest': Guest.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
+        }
 
 class SignOutEndpoint(Resource):
 

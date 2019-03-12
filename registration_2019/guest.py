@@ -6,6 +6,7 @@ from flask_restful import Resource, reqparse
 from .core import api, db, app
 from .helper import *
 from .authentication import auth
+from .dayof_model import SignIn
 
 ## Models
 class GuestKindEnum(enum.Enum):
@@ -21,8 +22,11 @@ class Guest(db.Model):
     email                 = Column(String(255),                nullable=False)
     kind                  = Column(Enum(GuestKindEnum),        nullable=False)
     signed_waiver         = Column(Boolean,                    nullable=False, default=False)
+    sign_in_id            = Column(Integer,                    ForeignKey(SignIn.id), nullable=True)
     outdated              = Column(Boolean,                    nullable=False, default=False)
     timestamp             = Column(DateTime,                   nullable=False, default=datetime.datetime.utcnow)
+
+    sign_in                = db.relationship('SignIn', foreign_keys='Guest.sign_in_id')
 
     def as_dict(self):
         result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}
