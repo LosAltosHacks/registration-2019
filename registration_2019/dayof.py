@@ -8,15 +8,10 @@ from .helper import *
 from .authentication import auth
 from .registration import Signup, SignIn
 
-## Helpers
-
-def validate_badge_data(badge_data):
-    # TODO validate badge_data based on whatever method we decide
-    return True
+# TODO write actual regex
+badge_data = re_matches(".*", "badge data")
 
 def sign_in(user_id, badge_data):
-    if not validate_badge_data(badge_data):
-        return {"message": "Invalid badge data"}, 400
     signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
     if signup and signup.sign_in:
         return {"message": "User already signed in"}, 400
@@ -62,7 +57,7 @@ class SignInEndpoint(Resource):
     def __init__(self):
 
         self.parser.add_argument('user_id',            type=strn, required=True)
-        self.parser.add_argument('badge_data',         type=strn, required=True)
+        self.parser.add_argument('badge_data',         type=badge_data, required=True)
 
     @auth
     def post(self):
@@ -77,7 +72,7 @@ class SignOutEndpoint(Resource):
     parser = reqparse.RequestParser()
 
     def __init__(self):
-        self.parser.add_argument('badge_data',         type=strn, required=True)
+        self.parser.add_argument('badge_data',         type=badge_data, required=True)
 
     @auth
     def post(self):
@@ -88,7 +83,7 @@ class MealLine(Resource):
     parser = reqparse.RequestParser()
 
     def __init__(self):
-        self.parser.add_argument('badge_data',         type=strn, required=True)
+        self.parser.add_argument('badge_data',         type=badge_data, required=True)
         self.parser.add_argument('meal_number',        type=int,  required=True)
         self.parser.add_argument('allowed_servings',   type=int,  required=True)
 
