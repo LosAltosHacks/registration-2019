@@ -30,6 +30,7 @@ class Guest(db.Model):
 
     def as_dict(self):
         result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}
+        result['signed_in'] = self.sign_in is not None
         return result
 
 ## Helper Functions
@@ -39,7 +40,7 @@ def email_in_use(new_email):
 
 def clean_guest(guest, extra=[]):
     return select_keys(guest.as_dict(), ['guest_id', 'name', 'email', 'phone',
-                                         'signed_waiver', 'timestamp', 'kind', *extra])
+                                         'signed_waiver', 'timestamp', 'kind', 'signed_in', *extra])
 
 
 def add_guest(guest):
