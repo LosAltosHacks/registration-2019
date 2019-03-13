@@ -42,6 +42,7 @@ class Mentor(db.Model):
     def as_dict(self):
         result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}
         result['email_verified'] = self.email_verification.verified
+        result['signed_in'] = self.sign_in is not None
         return result
 
 ## Helper Functions
@@ -52,8 +53,8 @@ def email_in_use(new_email):
 def clean_mentor(mentor, extra=[]):
     return select_keys(mentor.as_dict(), ['mentor_id', 'name', 'email', 'phone', 'tshirt_size',
                                           'skillset', 'dietary_restrictions', 'signed_waiver',
-                                          'over_18', 'acceptance_status', 'email_verified', 
-                                          'timestamp', *extra])
+                                          'over_18', 'acceptance_status', 'email_verified',
+                                          'timestamp', 'signed_in', *extra])
 
 def send_email(mentor, template):
     email_data = select_keys(mentor.as_dict(), ['mentor_id', 'name', 'email', 'phone'
