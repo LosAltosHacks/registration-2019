@@ -88,6 +88,7 @@ class SignInEndpoint(Resource):
         args = self.parser.parse_args()
         return sign_in(args['user_id'], args['badge_data'])
 
+    @auth
     def get(self):
         return {
             'attendee': Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
