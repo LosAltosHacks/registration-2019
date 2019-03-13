@@ -8,6 +8,7 @@ from .helper import *
 from .authentication import auth
 from .emailing import send_email_template
 from .registration import TShirtSizeEnum, AcceptanceStatusEnum
+from .dayof_model import SignIn
 
 ## Models
 
@@ -29,12 +30,14 @@ class Mentor(db.Model):
     tshirt_size           = Column(Enum(TShirtSizeEnum),       nullable=False)
     dietary_restrictions  = Column(String(255))
     email_verification_id = Column(Integer,                    ForeignKey(MentorEmailVerification.id))
+    sign_in_id            = Column(Integer,                    ForeignKey(SignIn.id), nullable=True)
     acceptance_status     = Column(Enum(AcceptanceStatusEnum), nullable=False, default=AcceptanceStatusEnum.none)
     signed_waiver         = Column(Boolean,                    nullable=False, default=False)
     outdated              = Column(Boolean,                    nullable=False, default=False)
     timestamp             = Column(DateTime,                   nullable=False, default=datetime.datetime.utcnow)
 
     email_verification    = db.relationship('MentorEmailVerification', foreign_keys='Mentor.email_verification_id')
+    sign_in                = db.relationship('SignIn', foreign_keys='Mentor.sign_in_id')
 
     def as_dict(self):
         result = {c.name: help_jsonify(getattr(self, c.name)) for c in self.__table__.columns}

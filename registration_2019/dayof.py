@@ -6,27 +6,49 @@ from flask_restful import Resource, reqparse
 from .core import api, db, app
 from .helper import *
 from .authentication import auth
-from .registration import Signup, SignIn
+from .registration import Signup
+from .mentor import Mentor
+from .guest import Guest
+from .dayof_model import SignIn
 
-## Helpers
-
-def validate_badge_data(badge_data):
-    # TODO validate badge_data based on whatever method we decide
-    return True
+# TODO write actual regex
+badge_data = re_matches(".*", "badge data")
 
 def sign_in(user_id, badge_data):
-    if not validate_badge_data(badge_data):
-        return {"message": "Invalid badge data"}, 400
-    signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
-    if signup and signup.sign_in:
-        return {"message": "User already signed in"}, 400
-    sign_in = SignIn(badge_data=badge_data)
-    db.session.add(sign_in)
-    # Could use the modify method, but interaction would be non-trivial given that its designed for forward facing API
-    signup.sign_in = sign_in
-    db.session.commit()
+    if SignIn.query.filter_by(badge_data=badge_data).scalar():
+        return {"messge": "badge_data already in use"}, 400
 
-    return {"status": "ok"}
+    signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
+    if signup:
+        if signup.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        signup.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
+
+    mentor = Mentor.query.filter_by(mentor_id=user_id, outdated=False).scalar()
+    if mentor:
+        if mentor.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        mentor.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
+
+    guest = Guest.query.filter_by(guest_id=user_id, outdated=False).scalar()
+    if guest:
+        if guest.sign_in:
+            return {"message": "User already signed in"}, 400
+        sign_in = SignIn(badge_data=badge_data)
+        db.session.add(sign_in)
+        guest.sign_in = sign_in
+        db.session.commit()
+        return {"status": "ok"}
+
+    return {"message": "User ID not found"}, 400
 
 def sign_out(badge_data):
     sign_in = SignIn.query.filter_by(badge_data=badge_data).scalar()
@@ -62,33 +84,27 @@ class SignInEndpoint(Resource):
     def __init__(self):
 
         self.parser.add_argument('user_id',            type=strn, required=True)
-        self.parser.add_argument('badge_data',         type=strn, required=True)
+        self.parser.add_argument('badge_data',         type=badge_data, required=True)
 
     @auth
     def post(self):
         args = self.parser.parse_args()
         return sign_in(args['user_id'], args['badge_data'])
 
-    def get(self):
-        return Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count()
-
-class SignOutEndpoint(Resource):
-
-    parser = reqparse.RequestParser()
-
-    def __init__(self):
-        self.parser.add_argument('badge_data',         type=strn, required=True)
-
     @auth
-    def post(self):
-        args = self.parser.parse_args()
-        return sign_out(args['badge_data'])
+    def get(self):
+        return {
+            'attendee': Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
+            'mentor': Mentor.query.filter(Mentor.sign_in_id.isnot(None), Mentor.outdated == False).count(),
+            'guest': Guest.query.filter(Guest.sign_in_id.isnot(None), Guest.outdated == False).count(),
+        }
+
 
 class MealLine(Resource):
     parser = reqparse.RequestParser()
 
     def __init__(self):
-        self.parser.add_argument('badge_data',         type=strn, required=True)
+        self.parser.add_argument('badge_data',         type=badge_data, required=True)
         self.parser.add_argument('meal_number',        type=int,  required=True)
         self.parser.add_argument('allowed_servings',   type=int,  required=True)
 
@@ -98,5 +114,4 @@ class MealLine(Resource):
         return meal_line(args)
 
 api.add_resource(SignInEndpoint,  '/dayof/v1/sign-in')
-api.add_resource(SignOutEndpoint, '/dayof/v1/sign-out')
 api.add_resource(MealLine,        '/dayof/v1/meal')
