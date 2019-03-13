@@ -96,17 +96,6 @@ class SignInEndpoint(Resource):
             'guest': Guest.query.filter(Guest.sign_in_id.isnot(None), Guest.outdated == False).count(),
         }
 
-class SignOutEndpoint(Resource):
-
-    parser = reqparse.RequestParser()
-
-    def __init__(self):
-        self.parser.add_argument('badge_data',         type=badge_data, required=True)
-
-    @auth
-    def post(self):
-        args = self.parser.parse_args()
-        return sign_out(args['badge_data'])
 
 class MealLine(Resource):
     parser = reqparse.RequestParser()
@@ -122,5 +111,4 @@ class MealLine(Resource):
         return meal_line(args)
 
 api.add_resource(SignInEndpoint,  '/dayof/v1/sign-in')
-api.add_resource(SignOutEndpoint, '/dayof/v1/sign-out')
 api.add_resource(MealLine,        '/dayof/v1/meal')

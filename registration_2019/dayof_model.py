@@ -6,7 +6,6 @@ from .core import db
 class SignIn(db.Model):
     id          = Column(Integer,     nullable=False, primary_key=True)
     badge_data  = Column(String(128),  nullable=False, unique=True)
-    signed_out  = Column(Boolean, nullable=False, default=False)
     meal_1      = Column(SmallInteger, nullable=False, default=0)
     meal_2      = Column(SmallInteger, nullable=False, default=0)
     meal_3      = Column(SmallInteger, nullable=False, default=0)
