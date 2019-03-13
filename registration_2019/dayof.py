@@ -15,6 +15,9 @@ from .dayof_model import SignIn
 badge_data = re_matches(".*", "badge data")
 
 def sign_in(user_id, badge_data):
+    if SignIn.query.filter_by(badge_data=badge_data).scalar():
+        return {"messge": "badge_data already in use"}, 400
+
     signup = Signup.query.filter_by(user_id=user_id, outdated=False).scalar()
     if signup:
         if signup.sign_in:
