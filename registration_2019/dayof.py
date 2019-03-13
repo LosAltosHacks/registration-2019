@@ -91,8 +91,8 @@ class SignInEndpoint(Resource):
     def get(self):
         return {
             'attendee': Signup.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
-            'mentor': Mentor.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
-            'guest': Guest.query.filter(Signup.sign_in_id.isnot(None), Signup.outdated == False).count(),
+            'mentor': Mentor.query.filter(Mentor.sign_in_id.isnot(None), Mentor.outdated == False).count(),
+            'guest': Guest.query.filter(Guest.sign_in_id.isnot(None), Guest.outdated == False).count(),
         }
 
 class SignOutEndpoint(Resource):
