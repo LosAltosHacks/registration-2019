@@ -19,6 +19,7 @@ class TShirtSizeEnum(enum.Enum):
 
 class AcceptanceStatusEnum(enum.Enum):
     none       = "none"
+    waitlist_queue = "waitlist_queue"
     waitlisted = "waitlisted"
     rejected   = "rejected"
     queue      = "queue"
