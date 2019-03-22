@@ -12,6 +12,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['LAH_REGISTRATION_DB'] # requ
 app.config['JWT_SECRET'] = os.environ.get('LAH_JWT_SECRET')
 app.config['DOCUSIGN_AUTH'] = os.environ.get('LAH_DOCUSIGN_AUTH')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('LAH_GOOGLE_CLIENT_ID')
+app.config['GOOGLE_CLIENT_ID_IOS'] = os.environ.get('LAH_GOOGLE_CLIENT_ID_IOS')
 app.config['GSUITE_DOMAIN_NAME'] = os.environ.get('LAH_GSUITE_DOMAIN_NAME')
 app.config['DISABLE_AUTHENTICATION'] = os.environ.get('LAH_DISABLE_AUTHENTICATION')
 app.config['SES_AWS_REGION'] = os.environ.get('LAH_SES_AWS_REGION')

@@ -36,9 +36,18 @@ class Login(Resource):
         args = self.parser.parse_args()
         token = args['token']
 
+        success = False
         try:
             idinfo = id_token.verify_oauth2_token(token, requests.Request(), app.config['GOOGLE_CLIENT_ID'])
+            success = True
         except:
+            pass
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), app.config['GOOGLE_CLIENT_ID_IOS'])
+            success = True
+        except:
+            pass
+        if not success:
             return {"message": "Could not authenticate"}, 401
 
         if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com'] or idinfo['hd'] != app.config['GSUITE_DOMAIN_NAME']:
